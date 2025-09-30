@@ -7,9 +7,13 @@ import (
 	"strings"
 )
 
-func repl() {
+type cliConfig struct {
+	Next     string
+	Previous string
+}
+
+func repl(cfg *cliConfig) {
 	scanner := bufio.NewScanner(os.Stdin)
-	context := cliConfig{}
 
 	for {
 		// Main REPL loop
@@ -24,14 +28,14 @@ func repl() {
 		}
 
 		// Looking for a matching command in registry
-		command, ok := getCommands()[cleanedInput[0]]
-		if !ok {
+		command, exists := getCommands()[cleanedInput[0]]
+		if !exists {
 			fmt.Println("Unknown command")
 			continue
 		}
 
 		// Invoking found command
-		err := command.callback(&context)
+		err := command.callback(cfg)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -47,11 +51,6 @@ type cliCommand struct {
 	name        string
 	description string
 	callback    func(*cliConfig) error
-}
-
-type cliConfig struct {
-	Next     string
-	Previous string
 }
 
 func getCommands() map[string]cliCommand {

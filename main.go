@@ -1,5 +1,7 @@
 package main
 
 func main() {
-	repl()
+	cfg := &cliConfig{}
+
+	repl(cfg)
 }
