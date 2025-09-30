@@ -1,71 +1,40 @@
 package main
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
 )
 
-func commandMapb(context *cliConfig) error {
-	// When going back, call map with Previous url passed as Next
-	if context.Previous == "" {
-		fmt.Println("you're on the first page")
-		return nil
-	}
-	context.Next = context.Previous
-	commandMap(context)
-
-	return nil
-}
-
-func commandMap(context *cliConfig) error {
-	// Check command context
-	if context.Next == "" {
-		context.Next = "https://pokeapi.co/api/v2/location-area/"
-	}
-
-	// Calling PokeAPI location-area endpoitn
-	// https://pokeapi.co/docs/v2#location-areas
-	res, err := http.Get(context.Next)
+func commandMapf(cfg *cliConfig) error {
+	locationsResp, err := cfg.pokeapiClient.ListLocations(cfg.nextLocationsURL)
 	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
-
-	if res.StatusCode > 299 {
-		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	// Unmarchalling into struct
-	location := Location{}
-	err = json.Unmarshal(body, &location)
-	if err != nil {
-		return fmt.Errorf("error Unmarshalling %s (%v)", body, err)
-	}
+	cfg.nextLocationsURL = locationsResp.Next
+	cfg.prevLocationsURL = locationsResp.Previous
 
-	// Update command context
-	context.Next = location.Next
-	context.Previous = location.Previous
-
-	// Display results for this batch
-	for _, result := range location.Results {
-		fmt.Println(result.Name)
+	for _, loc := range locationsResp.Results {
+		fmt.Println(loc.Name)
 	}
 	return nil
 }
 
-type Location struct {
-	Count    int    `json:"count"`
-	Next     string `json:"next"`
-	Previous string `json:"previous"`
-	Results  []struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"results"`
+func commandMapb(cfg *cliConfig) error {
+	if cfg.prevLocationsURL == nil {
+		return errors.New("you're on the first page")
+	}
+
+	locationResp, err := cfg.pokeapiClient.ListLocations(cfg.prevLocationsURL)
+	if err != nil {
+		return err
+	}
+
+	cfg.nextLocationsURL = locationResp.Next
+	cfg.prevLocationsURL = locationResp.Previous
+
+	for _, loc := range locationResp.Results {
+		fmt.Println(loc.Name)
+	}
+	return nil
 }
