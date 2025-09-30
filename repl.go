@@ -9,6 +9,7 @@ import (
 
 func repl() {
 	scanner := bufio.NewScanner(os.Stdin)
+	context := cliConfig{}
 
 	for {
 		// Main REPL loop
@@ -30,7 +31,7 @@ func repl() {
 		}
 
 		// Invoking found command
-		err := command.callback()
+		err := command.callback(&context)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -45,11 +46,26 @@ func cleanInput(text string) []string {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*cliConfig) error
+}
+
+type cliConfig struct {
+	Next     string
+	Previous string
 }
 
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
+		"map": {
+			name:        "map",
+			description: "Get the location areas",
+			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Get the previous batch of location areas",
+			callback:    commandMapb,
+		},
 		"help": {
 			name:        "help",
 			description: "Displays a help message",
