@@ -7,7 +7,7 @@ import (
 
 type Cache struct {
 	entryMap map[string]cacheEntry
-	mu       sync.RWMutex
+	mu       *sync.RWMutex
 	ttl      time.Duration
 }
 
@@ -17,10 +17,10 @@ type cacheEntry struct {
 }
 
 // NewCache -
-func NewCache(interval time.Duration) *Cache {
+func NewCache(interval time.Duration) Cache {
 	c := Cache{
 		entryMap: map[string]cacheEntry{},
-		mu:       sync.RWMutex{},
+		mu:       &sync.RWMutex{},
 		ttl:      interval,
 	}
 
@@ -32,5 +32,5 @@ func NewCache(interval time.Duration) *Cache {
 		}
 	}()
 
-	return &c
+	return c
 }
