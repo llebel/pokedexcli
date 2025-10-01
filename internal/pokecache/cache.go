@@ -8,7 +8,6 @@ import (
 type Cache struct {
 	entryMap map[string]cacheEntry
 	mu       *sync.RWMutex
-	ttl      time.Duration
 }
 
 type cacheEntry struct {
@@ -21,16 +20,9 @@ func NewCache(interval time.Duration) Cache {
 	c := Cache{
 		entryMap: map[string]cacheEntry{},
 		mu:       &sync.RWMutex{},
-		ttl:      interval,
 	}
 
-	// Initialize reap ticker
-	ticker := time.NewTicker(interval)
-	go func() {
-		for range ticker.C {
-			c.reapLoop()
-		}
-	}()
+	go c.reapLoop(interval)
 
 	return c
 }

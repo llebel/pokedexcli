@@ -27,14 +27,22 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 }
 
 // reapLoop -
-func (c *Cache) reapLoop() {
+func (c *Cache) reapLoop(interval time.Duration) {
+	// Initialize reap ticker
+	ticker := time.NewTicker(interval)
+	for range ticker.C {
+		c.reap(time.Now(), interval)
+	}
+}
+
+// reap -
+func (c *Cache) reap(now time.Time, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	now := time.Now()
 	for key, entry := range c.entryMap {
 		// If entry is older than cache TTL
-		if now.After(entry.createdAt.Add(c.ttl)) {
+		if now.After(entry.createdAt.Add(ttl)) {
 			delete(c.entryMap, key)
 		}
 	}
