@@ -38,7 +38,7 @@ func repl(cfg *cliConfig) {
 		}
 
 		// Invoking found command
-		err := command.callback(cfg)
+		err := command.callback(cfg, cleanedInput...)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -53,11 +53,16 @@ func cleanInput(text string) []string {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*cliConfig) error
+	callback    func(*cliConfig, ...string) error
 }
 
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
+		"explore": {
+			name:        "explore <area_name>",
+			description: "Explore a given location",
+			callback:    commandExplore,
+		},
 		"map": {
 			name:        "map",
 			description: "Get the location areas",
